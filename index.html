@@ -1,52 +1,419 @@
 <!DOCTYPE html>
-<html lang="en">
-
-
+<html lang="nl">
 <head>
-
-
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Rubik+Storm&family=Silkscreen&display=swap" rel="stylesheet">
-
-
-    <title>tak</title>
-    <div class="shadow">
-    <h1>klik Z of F</h1>
-    </div>
-
-
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <title>Mycelium Growth Simulator</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            padding:    0;
-            margin:     0;
-            text-align: center;     /* center <canvas> on the page */
-
-
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1a2e 50%, #16213e 100%);
+            color: #e0e0e0;
+            overflow: hidden;
+            position: relative;
         }
+
+        .ui-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .header {
+            background: rgba(10, 14, 39, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            pointer-events: auto;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .title-section {
+            flex: 1;
+        }
+
         h1 {
-          z-index:1000;
-          font-family: "Rubik Storm";
-          margin-bottom: 5px;
-          padding-bottom: 5px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00f5ff 0%, #ff00ff 50%, #00ff88 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.3rem;
+            letter-spacing: -0.5px;
         }
-        .shadow {
-          -webkit-box-shadow: 0px 10px 13px -7px #000000, 5px 5px 15px 5px rgba(0,0,0,0);
-box-shadow: 0px 10px 13px -7px #000000, 5px 5px 15px 5px rgba(0,0,0,0);
 
+        .subtitle {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 300;
+            letter-spacing: 0.5px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .stats-panel {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: rgba(10, 14, 39, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            min-width: 250px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            pointer-events: auto;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 400;
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #00f5ff;
+        }
+
+        .keyboard-hint {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            background: rgba(10, 14, 39, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1rem 1.5rem;
+            pointer-events: auto;
+        }
+
+        .key {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            margin: 0 0.3rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .hint-text {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 0.5rem;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00ff88;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .status-badge.paused {
+            background: rgba(255, 100, 100, 0.1);
+            border-color: rgba(255, 100, 100, 0.3);
+        }
+
+        .status-badge.paused .status-dot {
+            background: #ff6464;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        canvas {
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .stats-panel, .keyboard-hint {
+                bottom: 1rem;
+                left: 1rem;
+                right: 1rem;
+                max-width: calc(100% - 2rem);
+            }
+
+            .stats-panel {
+                bottom: auto;
+                top: 120px;
+            }
         }
     </style>
-
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.1.9/p5.js"></script>
-    <script src="sketch.js"></script>
-    <script src="fungus.js"></script>
 </head>
-
-
 <body>
+    <div class="ui-container">
+        <div class="header">
+            <div class="header-content">
+                <div class="title-section">
+                    <h1>Mycelium Growth Simulator</h1>
+                    <div class="subtitle">Organische groeipatronen visualisatie</div>
+                </div>
+                <div class="controls">
+                    <div class="status-badge" id="statusBadge">
+                        <div class="status-dot"></div>
+                        <span>Actief</span>
+                    </div>
+                    <button class="btn btn-primary" id="pauseBtn">
+                        <span>⏸</span> Pauzeer
+                    </button>
+                    <button class="btn btn-secondary" id="resetBtn">
+                        <span>↻</span> Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <div class="stats-panel">
+        <div class="stat-item">
+            <span class="stat-label">Actieve takken</span>
+            <span class="stat-value" id="fungiCount">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Frame rate</span>
+            <span class="stat-value" id="fps">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Generatie</span>
+            <span class="stat-value" id="generation">1</span>
+        </div>
+    </div>
+
+    <div class="keyboard-hint">
+        <div class="hint-text">Sneltoetsen:</div>
+        <div>
+            <span class="key">Z</span> Pauzeer/Hervat
+            <span class="key">F</span> Reset
+        </div>
+    </div>
+
+    <script>
+        // Fungus class
+        class Fungus {
+            constructor(x, y, angle) {
+                this.angleChangeAmt = radians(2);
+                this.speed = 0.8;
+                this.chanceSplit = 2.3;
+                this.splitAngle = radians(28);
+                this.x = x;
+                this.y = y;
+                this.prevX = x;
+                this.prevY = y;
+                this.angle = angle || random(0, TWO_PI);
+                this.distFromCenter = 0;
+                this.age = 0;
+                this.hue = random(180, 280);
+            }
+
+            update() {
+                this.age += 1.4;
+                this.distFromCenter = dist(width/2, height/2, this.x, this.y);
+                this.angle += random(-this.angleChangeAmt, this.angleChangeAmt);
+                this.prevX = this.x;
+                this.prevY = this.y;
+                this.x += cos(this.angle) * this.speed;
+                this.y += sin(this.angle) * this.speed;
+
+                if (random(180) < this.chanceSplit) {
+                    let f = new Fungus(this.x, this.y, this.angle + this.splitAngle);
+                    fungi.push(f);
+                    this.angle -= this.splitAngle;
+                }
+            }
+
+            display() {
+                let alpha = map(this.age, 0, maxAge, 120, 20);
+                stroke(this.hue, 80, 95, alpha);
+                strokeWeight(1.5);
+                line(this.prevX, this.prevY, this.x, this.y);
+            }
+        }
+
+        // Main sketch
+        let maxAge = 100;
+        let paused = false;
+        let fungi = [];
+        let generation = 1;
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            colorMode(HSB, 360, 100, 100, 100);
+            background(220, 60, 10);
+            fungi = [];
+            for (let i = 0; i < 3; i++) {
+                let f = new Fungus(width/2, height/2);
+                fungi.push(f);
+            }
+        }
+
+        function draw() {
+            if (!paused) {
+                for (let i = fungi.length - 1; i >= 0; i -= 5) {
+                    let f = fungi[i];
+                    f.update();
+                    if (f.distFromCenter >= height/3 || f.age > maxAge) {
+                        fungi.splice(i, 1);
+                    }
+                    f.display();
+                }
+
+                if (frameRate() < 20) {
+                    generation++;
+                    setup();
+                }
+            }
+
+            // Update UI
+            document.getElementById('fungiCount').textContent = fungi.length;
+            document.getElementById('fps').textContent = Math.round(frameRate());
+            document.getElementById('generation').textContent = generation;
+        }
+
+        function keyPressed() {
+            if (key === 'z' || key === 'Z') {
+                togglePause();
+            } else if (key === 'f' || key === 'F') {
+                resetSimulation();
+            }
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+            generation++;
+            setup();
+        }
+
+        function togglePause() {
+            paused = !paused;
+            const statusBadge = document.getElementById('statusBadge');
+            const pauseBtn = document.getElementById('pauseBtn');
+            
+            if (paused) {
+                statusBadge.classList.add('paused');
+                statusBadge.querySelector('span').textContent = 'Gepauzeerd';
+                pauseBtn.innerHTML = '<span>▶</span> Hervat';
+            } else {
+                statusBadge.classList.remove('paused');
+                statusBadge.querySelector('span').textContent = 'Actief';
+                pauseBtn.innerHTML = '<span>⏸</span> Pauzeer';
+            }
+        }
+
+        function resetSimulation() {
+            generation++;
+            setup();
+        }
+
+        // Button event listeners
+        document.getElementById('pauseBtn').addEventListener('click', togglePause);
+        document.getElementById('resetBtn').addEventListener('click', resetSimulation);
+    </script>
 </body>
-
 </html>
